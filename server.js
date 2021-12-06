@@ -1,11 +1,24 @@
 const Sentry = require('@sentry/node')
+const SentryTracing = require("@sentry/tracing");
 
 const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
 const app = express();
 
-Sentry.init({ dsn: "https://bf57b19ffefb46efbef467dfc5f57de7@o87286.ingest.sentry.io/6089805" });
+Sentry.init({ 
+    dsn: "https://bf57b19ffefb46efbef467dfc5f57de7@o87286.ingest.sentry.io/6089805",
+    debug: true,
+    integrations: [
+        new Sentry.Integrations.Http({ tracing: true }),
+        new SentryTracing.Integrations.Express({ app })
+      ],
+      tracesSampleRate: 1.0,
+      tracesSampler: samplingContext => {
+        console.log("> log from tracesSampler", samplingContext)
+        return 1.0
+      }
+});
 app.use(Sentry.Handlers.requestHandler());
 
 app.use('/api', createProxyMiddleware({ 
